@@ -8,6 +8,7 @@ import { inject, injectable } from 'inversify';
 import { checkRunDetailsTitle, checkRunName, disclaimerText } from '../content/strings';
 import { iocTypes } from '../ioc/ioc-types';
 import { AxeMarkdownConvertor } from '../mark-down/axe-markdown-convertor';
+import { isNil } from 'lodash';
 
 @injectable()
 export class CheckRunCreator {
@@ -17,7 +18,7 @@ export class CheckRunCreator {
         @inject(AxeMarkdownConvertor) private readonly axeMarkdownConvertor: AxeMarkdownConvertor,
         @inject(Octokit) private readonly octokit: Octokit,
         @inject(iocTypes.Github) private readonly githubObj: typeof github,
-    ) {}
+    ) { }
 
     public async createRun(): Promise<Octokit.ChecksCreateResponse> {
         this.a11yCheck = (
@@ -26,7 +27,8 @@ export class CheckRunCreator {
                 repo: this.githubObj.context.repo.repo,
                 name: checkRunName,
                 status: 'in_progress',
-                head_sha: this.githubObj.context.sha,
+                head_sha: isNil(this.githubObj.context.payload.pull_request) ?
+                    this.githubObj.context.sha : this.githubObj.context.payload.pull_request.head.sha,
             })
         ).data;
 
